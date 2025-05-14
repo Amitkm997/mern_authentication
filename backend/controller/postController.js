@@ -1,35 +1,89 @@
 import Post from "../models/postModel.js";
 export const createPost = async (req, res) => {
-  const { title, content } = req.body;
-  const post = await Post.create({ title, content, createdBy: req.user.id });
-  res.send(post);
+  try {
+    const { title, content } = req.body;
+
+    // Basic validation
+    if (!title || !content) {
+      return res
+        .status(400)
+        .json({ message: "Title and content are required" });
+    }
+
+    const post = await Post.create({
+      title,
+      content,
+      createdBy: req.user.id,
+    });
+
+    return res.status(201).json({
+      message: "Post created successfully",
+      post,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to create post",
+      error: error.message,
+    });
+  }
 };
 
-export const getAllposts = async (req, res) => {
-  const post = await Post.find();
-  res.send(post);
+export const getAllPosts = async (req, res) => {
+  try {
+    const posts = await Post.find(); // newest first (optional)
+    return res.status(200).json({
+      message: "All posts fetched successfully",
+      posts,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Failed to fetch posts",
+      error: error.message,
+    });
+  }
 };
 
 export const likePost = async (req, res) => {
-  let post = await Post.findById(req.params.postId);
-  if (!post) return res.send("post not found");
-  post.likes += 1;
-  await post.save();
-  res.send(post);
+  try {
+    const post = await Post.findById(req.params.postId);
+
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    post.likes += 1;
+    const updatedPost = await post.save();
+
+    return res.status(200).json(updatedPost);
+  } catch (error) {
+    console.error("Error in likePost:", error);
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
 };
 
 export const editPost = async (req, res) => {
-  const postId = req.params.postId;
-  console.log(postId);
-  const { title, content } = req.body;
+  try {
+    const postId = req.params.postId;
+    const { title, content } = req.body;
 
-  const post = await Post.findById(postId);
-  console.log(post);
-  if (!post) return res.send("post not avalilabel");
+    // Find the post
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: "Post not available" });
+    }
 
-  post.title = title;
-  post.content = content;
+    // Update the post
+    post.title = title || post.title;
+    post.content = content || post.content;
 
-  post.save();
-  res.send(post);
+    const updatedPost = await post.save();
+
+    return res
+      .status(200)
+      .json({ message: "Post updated successfully", post: updatedPost });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Server error", error: error.message });
+  }
 };

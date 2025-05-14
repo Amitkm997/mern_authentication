@@ -6,7 +6,6 @@ export default function Navbar() {
       <nav style={{ margin: "10px" }}>
         <Link to="/register">Register</Link>
         <Link to="/login">Login</Link>
-        {/* <Link to="/posts">Post</Link> */}
         <Link to="/create">CreatePost</Link>
       </nav>
     </div>

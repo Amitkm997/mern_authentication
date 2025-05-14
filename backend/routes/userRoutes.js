@@ -4,7 +4,7 @@ import {
   createPost,
   editPost,
   likePost,
-  getAllposts,
+  getAllPosts,
 } from "../controller/postController.js";
 import { authentication, authorization } from "../middleware/auth.js";
 const router = express.Router();
@@ -12,8 +12,8 @@ const router = express.Router();
 router.post("/register", register);
 router.post("/login", login);
 
-router.post("/posts", authentication, createPost);
-router.get("/allPosts", authentication, getAllposts);
+router.post("/post", authentication, createPost);
+router.get("/allPosts", authentication, getAllPosts);
 router.put("/likePost/:postId", authentication, likePost);
 router.put("/editPost/:postId", authentication, authorization, editPost);
 //protected route

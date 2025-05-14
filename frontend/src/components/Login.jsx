@@ -9,8 +9,9 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const res = await API.post("/login", form);
+    console.log("Login response:", res); // 👈 Inspect the full response
+    console.log("Token received:", res.data.token); // 👈 Check if token is there
     localStorage.setItem("token", res.data.token);
-    console.log(res);
     alert("Login successful!");
     navigate("/posts");
   };

@@ -2,38 +2,71 @@ import User from "../models/userModel.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 let emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export const register = async (req, res) => {
-  const { name, email, password } = req.body;
-  if (!name) return res.status(400).send({ message: "please provide name" });
-  if (!email) return res.status(400).send({ message: "please provide email" });
-  if (!password)
-    return res.status(400).send({ message: "please provide password" });
-  if (!emailRegex.test(email)) return res.send("please provide valid email");
+  try {
+    const { name, email, password } = req.body;
 
-  const userExist = await User.findOne({ email });
-  if (userExist) return res.send("user already exist");
+    // Input validation
+    if (!name) return res.status(400).json({ message: "Please provide name" });
+    if (!email)
+      return res.status(400).json({ message: "Please provide email" });
+    if (!password)
+      return res.status(400).json({ message: "Please provide password" });
 
-  let hashedPassword = await bcrypt.hash(password, 10);
-  const newUser = await User.create({ name, email, password: hashedPassword });
-  return res.send(newUser);
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email))
+      return res.status(400).json({ message: "Please provide a valid email" });
+
+    // Check if user already exists
+    const userExist = await User.findOne({ email });
+    if (userExist)
+      return res.status(409).json({ message: "User already exists" });
+
+    // Hash the password and create user
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const newUser = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+    });
+
+    // Success response
+    return res
+      .status(201)
+      .json({ message: "User registered successfully", user: newUser });
+  } catch (error) {
+    return res.status(500).json({ message: error.message });
+  }
 };
 
 export const login = async (req, res) => {
-  const { email, password } = req.body;
-  if (!email) return res.status(400).send({ message: "please provide email" });
-  if (!emailRegex.test(email)) return res.send("please provide valid email");
-  if (!password)
-    return res.status(400).send({ message: "please provide password" });
+  try {
+    const { email, password } = req.body;
 
-  let existUser = await User.findOne({ email });
-  if (!existUser) return res.send("user not registered");
+    if (!email)
+      return res.status(400).send({ message: "please provide email" });
+    if (!emailRegex.test(email))
+      return res.status(400).send({ message: "please provide valid email" });
+    if (!password)
+      return res.status(400).send({ message: "please provide password" });
 
-  let comparedPassword = bcrypt.compare(password, existUser.password);
-  if (!comparedPassword) return res.send("password not correct");
-  //token generation
-  let payload = {
-    id: existUser._id,
-  };
-  let token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: "1h" });
-  res.send({ token: token });
+    const existUser = await User.findOne({ email });
+    if (!existUser)
+      return res.status(404).send({ message: "user not registered" });
+
+    const comparedPassword = await bcrypt.compare(password, existUser.password);
+    if (!comparedPassword)
+      return res.status(401).send({ message: "password not correct" });
+
+    const payload = { id: existUser._id };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: "1h",
+    });
+
+    res.send({ token });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).send({ message: "Something went wrong on the server." });
+  }
 };
