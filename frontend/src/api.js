@@ -1,6 +1,6 @@
 import axios from "axios";
-
-const API = axios.create({ baseURL: "http://localhost:5000" }); // adjust if needed
+import dotenv from "dotenv";
+dotenv.config();
 
 API.interceptors.request.use((req) => {
   const token = localStorage.getItem("token");
